@@ -1,5 +1,6 @@
+use crate::dsp::DspProcessor;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use ringbuf::traits::{Observer, Producer, Split};
+use ringbuf::traits::{Consumer, Observer, Producer, Split};
 use ringbuf::HeapRb;
 use std::thread;
 use std::time::Duration;
@@ -25,10 +26,33 @@ pub fn start_audio_capture() {
             config.sample_format()
         );
 
-        // Create a ring buffer for ~2 seconds of audio
+        // Create a ring buffer
         let buffer_size = sample_rate * channels * 2;
         let rb = HeapRb::<f32>::new(buffer_size);
-        let (mut prod, mut _cons) = rb.split();
+        let (mut prod, mut cons) = rb.split();
+
+        // Spawn DSP thread
+        thread::spawn(move || {
+            let fft_size = 512;
+            let mut dsp = DspProcessor::new(fft_size, sample_rate as f32);
+            let mut frame_buf = vec![0.0; fft_size];
+
+            loop {
+                if cons.occupied_len() >= fft_size {
+                    // Read a frame
+                    let mut read = 0;
+                    while read < fft_size {
+                        if let Some(sample) = cons.try_pop() {
+                            frame_buf[read] = sample;
+                            read += 1;
+                        }
+                    }
+                    dsp.process_frame(&frame_buf);
+                } else {
+                    thread::sleep(Duration::from_millis(5));
+                }
+            }
+        });
 
         let err_fn = move |err| {
             eprintln!("an error occurred on stream: {}", err);
@@ -36,27 +60,12 @@ pub fn start_audio_capture() {
 
         let stream = match config.sample_format() {
             cpal::SampleFormat::F32 => device.build_input_stream(
-                config.config(),
+                config.into(),
                 move |data: &[f32], _: &cpal::InputCallbackInfo| {
-                    // Push to ring buffer (discarding oldest if full just for now to prevent blocking)
-                    // In Phase 3, the DSP thread will consume this.
-                    let mut max_amp = 0.0_f32;
                     for &sample in data {
-                        // Normally we would just push, and if full, the consumer is too slow.
-                        // For phase 2 validation, we just ensure it doesn't crash.
                         if !prod.is_full() {
                             let _ = prod.try_push(sample);
                         }
-
-                        let abs = sample.abs();
-                        if abs > max_amp {
-                            max_amp = abs;
-                        }
-                    }
-
-                    // Debug-only live level output if amplitude is noticeable
-                    if max_amp > 0.05 {
-                        println!("Audio detected, max amplitude: {:.3}", max_amp);
                     }
                 },
                 err_fn,
