@@ -1,4 +1,4 @@
-# Bonk — Project Specification
+# Bonk - Project Specification
 
 ## 1. Overview & Philosophy
 **One-liner:** A cross-platform background app that listens to your microphone and turns physical sounds (knocks, claps, slams, snaps) into customizable system actions.
