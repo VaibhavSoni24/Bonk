@@ -51,8 +51,8 @@ impl DspProcessor {
         let half_size = self.fft_size / 2;
         let freq_resolution = self.sample_rate / self.fft_size as f32;
 
-        for i in 1..half_size {
-            let magnitude = buffer[i].norm();
+        for (i, val) in buffer.iter().enumerate().take(half_size).skip(1) {
+            let magnitude = val.norm();
             let freq = i as f32 * freq_resolution;
             num += freq * magnitude;
             den += magnitude;
