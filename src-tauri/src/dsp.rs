@@ -20,14 +20,7 @@ impl DspProcessor {
     }
 
     pub fn process_frame_and_get_rms(&mut self, samples: &[f32]) -> f32 {
-        let rms = Self::calculate_rms(samples);
-
-        // Trigger threshold: log events above ambient noise
-        if rms > 0.05 {
-            let centroid = self.spectral_centroid(samples);
-            println!("DSP_EVENT | RMS: {:.5} | Centroid: {:.1} Hz", rms, centroid);
-        }
-        rms
+        Self::calculate_rms(samples)
     }
 
     fn calculate_rms(samples: &[f32]) -> f32 {
@@ -38,7 +31,7 @@ impl DspProcessor {
         (sum_sq / samples.len() as f32).sqrt()
     }
 
-    fn spectral_centroid(&mut self, samples: &[f32]) -> f32 {
+    pub fn spectral_centroid(&mut self, samples: &[f32]) -> f32 {
         let mut buffer: Vec<Complex<f32>> = samples
             .iter()
             .take(self.fft_size)

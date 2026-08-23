@@ -1,4 +1,7 @@
+use crate::classifier::GestureClassifier;
 use crate::dsp::DspProcessor;
+use crate::event_builder::EventBuilder;
+use crate::pattern::PatternTracker;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use ringbuf::traits::{Consumer, Observer, Producer, Split};
 use ringbuf::HeapRb;
@@ -38,6 +41,11 @@ pub fn start_audio_capture() {
             let mut dsp = DspProcessor::new(fft_size, sample_rate as f32);
             let mut frame_buf = vec![0.0; fft_size];
 
+            let frame_duration_ms = (fft_size as f32 / sample_rate as f32) * 1000.0;
+            let mut event_builder = EventBuilder::new(0.05, 50.0, frame_duration_ms);
+            let classifier = GestureClassifier::new();
+            let mut pattern_tracker = PatternTracker::new();
+
             loop {
                 if cons.occupied_len() >= fft_size {
                     // Read a frame
@@ -49,7 +57,26 @@ pub fn start_audio_capture() {
                         }
                     }
 
-                    dsp.process_frame_and_get_rms(&frame_buf);
+                    let rms = dsp.process_frame_and_get_rms(&frame_buf);
+                    let centroid = dsp.spectral_centroid(&frame_buf);
+
+                    if let Some(event) = event_builder.process_frame(rms, centroid) {
+                        println!(
+                            "Transient Event: dur={:.1}ms, peak_rms={:.3}, cent={:.1}Hz",
+                            event.duration_ms, event.peak_rms, event.avg_centroid_hz
+                        );
+                        if let Some(gesture) = classifier.classify(&event) {
+                            if let Some(final_gesture) = pattern_tracker.process_gesture(gesture) {
+                                println!("GESTURE DETECTED: {:?}", final_gesture);
+                            }
+                        } else {
+                            println!("Gesture not recognized.");
+                        }
+                    }
+
+                    if let Some(final_gesture) = pattern_tracker.tick() {
+                        println!("GESTURE DETECTED: {:?}", final_gesture);
+                    }
                 } else {
                     thread::sleep(Duration::from_millis(5));
                 }

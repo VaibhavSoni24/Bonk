@@ -1,5 +1,8 @@
 pub mod audio;
+pub mod classifier;
 pub mod dsp;
+pub mod event_builder;
+pub mod pattern;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
