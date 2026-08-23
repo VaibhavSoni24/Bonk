@@ -38,9 +38,6 @@ pub fn start_audio_capture() {
             let mut dsp = DspProcessor::new(fft_size, sample_rate as f32);
             let mut frame_buf = vec![0.0; fft_size];
 
-            let mut last_print = std::time::Instant::now();
-            let mut max_rms: f32 = 0.0;
-
             loop {
                 if cons.occupied_len() >= fft_size {
                     // Read a frame
@@ -52,21 +49,9 @@ pub fn start_audio_capture() {
                         }
                     }
 
-                    let rms = dsp.process_frame_and_get_rms(&frame_buf);
-                    if rms > max_rms {
-                        max_rms = rms;
-                    }
+                    dsp.process_frame_and_get_rms(&frame_buf);
                 } else {
                     thread::sleep(Duration::from_millis(5));
-                }
-
-                if last_print.elapsed() >= Duration::from_secs(1) {
-                    println!(
-                        "[HEARTBEAT] Audio thread alive. Max RMS last sec: {:.6}",
-                        max_rms
-                    );
-                    max_rms = 0.0;
-                    last_print = std::time::Instant::now();
                 }
             }
         });

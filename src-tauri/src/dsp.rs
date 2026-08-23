@@ -23,7 +23,7 @@ impl DspProcessor {
         let rms = Self::calculate_rms(samples);
 
         // Trigger threshold: log events above ambient noise
-        if rms > 0.001 {
+        if rms > 0.015 {
             let centroid = self.spectral_centroid(samples);
             println!("DSP_EVENT | RMS: {:.5} | Centroid: {:.1} Hz", rms, centroid);
         }
