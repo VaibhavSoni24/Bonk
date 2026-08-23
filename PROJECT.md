@@ -190,7 +190,7 @@ All actions are implemented natively per OS, maintaining cross-platform parity.
 
 **Core Screens:**
 1. **Tray Presence:** Icon + Right-click menu (Open, Pause Listening, Quit). Left click opens UI.
-2. **Onboarding / Permissions:** Short explainer shown before the OS mic-permission prompt, especially framed for macOS's stricter flow to ensure users understand the local-only nature before accepting.
+2. **Onboarding / Permissions:** Short explainer shown before the OS mic-permission prompt, especially framed for macOS's stricter flow to ensure users understand the local-only nature before accepting. It also validates mic access, runs a brief live-level check, and explicitly warns the user to disable OS/Hardware "Audio Enhancements" (noise suppression) if gestures are failing to register.
 3. **Dashboard:** Live mic level meter, Listening toggle, Recent Activity Log (last 10 triggers).
 4. **Calibration Wizard:** Step-by-step guided recording (3 reps for built-ins, 1 rep for custom). Visual waveform + countdown.
 5. **Gesture Mapping:** Table of all 11 built-ins + up to 10 customs. Searchable action dropdowns. Expandable inline fields for params. Includes the **Action Chain Builder** (ordered list UI).
@@ -238,6 +238,7 @@ bonk/
 - **Scrape Grace Period:** Micro-gaps in physical scraping can drop the envelope. A ~50ms grace period before finalizing an event is required.
 - **Mac Mic Permissions:** macOS strictly requires `Info.plist` strings and often requires manual system settings approval. The app must handle denial gracefully and guide the user.
 - **Hardware Toggles on Unix:** Prompting for `pkexec`/sudo correctly without hanging the background thread.
+- **Hardware Mic Noise Cancellation:** Windows and many laptop drivers aggressively filter out transient taps and knocks while passing speech. If gestures aren't registering, the user must disable microphone enhancements in their OS settings. This is a confirmed issue and must be documented in onboarding and troubleshooting guides.
 - **DTW Thresholds:** Tuning the DTW distance confidence threshold so a custom phrase doesn't randomly trigger on coughs.
 
 ## 13. Accuracy & Testing Strategy
