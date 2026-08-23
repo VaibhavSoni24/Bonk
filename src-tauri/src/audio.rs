@@ -33,6 +33,7 @@ pub fn start_audio_capture() {
 
         // Spawn DSP thread
         thread::spawn(move || {
+            println!("DSP thread started, waiting for audio...");
             let fft_size = 512;
             let mut dsp = DspProcessor::new(fft_size, sample_rate as f32);
             let mut frame_buf = vec![0.0; fft_size];
@@ -62,9 +63,10 @@ pub fn start_audio_capture() {
             cpal::SampleFormat::F32 => device.build_input_stream(
                 config.into(),
                 move |data: &[f32], _: &cpal::InputCallbackInfo| {
-                    for &sample in data {
+                    for chunk in data.chunks(channels) {
                         if !prod.is_full() {
-                            let _ = prod.try_push(sample);
+                            // Take only the first channel to make it mono
+                            let _ = prod.try_push(chunk[0]);
                         }
                     }
                 },
