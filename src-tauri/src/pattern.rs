@@ -1,5 +1,5 @@
 use crate::classifier::GestureType;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum FinalGesture {
@@ -88,5 +88,11 @@ impl PatternTracker {
     fn reset(&mut self) {
         self.knock_count = 0;
         self.last_knock_time = None;
+    }
+}
+
+impl Default for PatternTracker {
+    fn default() -> Self {
+        Self::new()
     }
 }

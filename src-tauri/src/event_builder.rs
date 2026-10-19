@@ -90,7 +90,7 @@ impl EventBuilder {
             .accumulated_rms
             .iter()
             .cloned()
-            .fold(0.0 / 0.0, f32::max);
+            .fold(f32::NAN, f32::max);
 
         // Average centroid across all frames
         let avg_centroid_hz = if !self.accumulated_centroid.is_empty() {
