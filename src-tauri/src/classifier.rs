@@ -38,17 +38,17 @@ impl GestureClassifier {
         let cent = event.avg_centroid_hz;
 
         // Snap: Very short duration, extremely high frequency
-        if dur >= 10.0 && dur <= 45.0 && cent > 4000.0 {
+        if (10.0..=45.0).contains(&dur) && cent > 4000.0 {
             return Some(GestureType::Snap);
         }
 
         // Clap: Short duration, high frequency
-        if dur >= 20.0 && dur <= 90.0 && cent > 2500.0 && cent <= 4000.0 {
+        if (20.0..=90.0).contains(&dur) && (2500.0..=4000.0).contains(&cent) {
             return Some(GestureType::Clap);
         }
 
         // Single Knock: Medium duration, low/mid frequency
-        if dur >= 40.0 && dur <= 150.0 && cent > 500.0 && cent <= 2500.0 {
+        if (40.0..=150.0).contains(&dur) && (500.0..=2500.0).contains(&cent) {
             return Some(GestureType::SingleKnock);
         }
 
@@ -56,7 +56,12 @@ impl GestureClassifier {
         if dur >= 80.0 && cent <= 500.0 {
             return Some(GestureType::Slam);
         }
-
         None // Doesn't cleanly match a known gesture fingerprint
+    }
+}
+
+impl Default for GestureClassifier {
+    fn default() -> Self {
+        Self::new()
     }
 }
